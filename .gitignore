@@ -4,3 +4,5 @@ notebooks
 airflow/logs/
 airflow/.env
 airflow/config/
+airflow/dags/test_dag.py
+sql-cheatsheet.md
