@@ -20,12 +20,13 @@ CREATE TABLE IF NOT EXISTS cities (
 CREATE TABLE IF NOT EXISTS forecast_fetches (
 
     fetch_id INTEGER PRIMARY KEY,
-    pipeline_run_id INTEGER NOT NULL,
+    pipeline_run_id TEXT NOT NULL,
     city_id INTEGER NOT NULL,
     fetch_date TEXT NOT NULL,
     raw_response TEXT NOT NULL,
 
-    UNIQUE (fetch_id, pipeline_run_id, city_id),
+    UNIQUE (pipeline_run_id, city_id),
+    UNIQUE (fetch_id, city_id),
 
     FOREIGN KEY (city_id) REFERENCES cities(city_id)
 );

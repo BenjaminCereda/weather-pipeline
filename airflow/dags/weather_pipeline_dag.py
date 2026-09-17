@@ -18,7 +18,8 @@ default_args = {
     description="Weather pipeline",
     start_date=datetime(2026,1,1),
     schedule="@hourly",
-    catchup=False
+    catchup=False,
+    max_active_runs=1
 )
 
 def weather_pipeline():
