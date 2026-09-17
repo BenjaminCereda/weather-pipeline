@@ -1,3 +1,6 @@
 data/weather.db
 __pycache__
 notebooks
+airflow/logs/
+airflow/.env
+airflow/config/
