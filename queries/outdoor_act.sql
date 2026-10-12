@@ -26,9 +26,8 @@ join cities c
     on h.city_id = c.city_id
 
 where
-    h.day_time >= date('now')
-    and h.day_time < date('now', '+3 days')
-
+    TO_DATE(h.day_time, 'YYYY-MM-DD') >= CURRENT_DATE
+    and TO_DATE(h.day_time, 'YYYY-MM-DD') < CURRENT_DATE + INTERVAL '3 days'
 group by
     c.city_name
 

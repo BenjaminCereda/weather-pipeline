@@ -3,23 +3,28 @@ import sqlite3
 import datetime
 from pathlib import Path
 import os
+from db_con import get_connection
 
 def main():
 
     checks = Path("./data_quality")
 
-    with sqlite3.connect("./data/weather.db") as conn:
+    with get_connection() as conn:
 
-        for check in checks.glob("*.sql"):
+        with conn.cursor() as cur:
 
-            stmt = open(check, "r").read()
+            for check in checks.glob("*.sql"):
 
-            df = pd.read_sql_query(stmt, conn)
-            
-            if not df.empty:
-                raise ValueError(f"Query {os.path.basename(check)} returned the following faulty rows:\n {df}")
-            else:
-                print(f"✓ {os.path.basename(check)}")
+                stmt = open(check, "r").read()
+
+                cur.execute(stmt)
+
+                result = cur.fetchall()
+
+                if result:
+                    raise ValueError(f"Query {os.path.basename(check)} returned the following faulty rows:\n {result}")
+                else:
+                    print(f"✓ {os.path.basename(check)}")
 
 if __name__ == "__main__":
     

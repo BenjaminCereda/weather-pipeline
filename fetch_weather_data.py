@@ -6,6 +6,7 @@ import json
 import yaml
 import os
 import uuid
+from db_con import get_connection
 
 
 def fetch_weatherdata(city, latitude, longitude):
@@ -60,24 +61,25 @@ def fetch_weatherdata(city, latitude, longitude):
 def insert_cities(cur, row):
     
     cur.execute("""SELECT * FROM cities
-                WHERE city_name = ?
-                AND region = ?
-                AND latitude = ?
-                AND longitude = ?
-                """, row
+                WHERE city_name = %s
+                AND region = %s
+                """, row[:2]
     )
 
     result = cur.fetchone()
-
+    
     if result is not None:
         return result[0]
 
     cur.execute("""INSERT INTO cities (city_name, region, latitude, longitude)
-                VALUES (?,?,?,?)
+                VALUES (%s,%s,%s,%s)
+                RETURNING city_id
                 """, row
     )
 
-    return cur.lastrowid
+    print("Inserted into cities table")
+
+    return cur.fetchone()[0]
 
 def insert_fc_fetch(cur, city_id, raw_text):
     
@@ -90,11 +92,12 @@ def insert_fc_fetch(cur, city_id, raw_text):
         pipeline_run_id = f"Manual_{str(uuid.uuid4())}"
 
     cur.execute("""INSERT INTO forecast_fetches (pipeline_run_id, city_id, fetch_date, raw_response)
-                VALUES (?,?,?,?)
+                VALUES (%s,%s,%s,%s)
+                RETURNING fetch_id
                 """,
                 (pipeline_run_id, city_id, date, raw_text)
     )
-    return cur.lastrowid
+    return cur.fetchone()[0]
 
 def insert_fc_data(cur, df, city_id, fetch_id):
     
@@ -107,7 +110,7 @@ def insert_fc_data(cur, df, city_id, fetch_id):
     cur.executemany("""INSERT INTO hourly_forecast
                     (fetch_id, city_id, day_time, hour_time, temperature_2m, visibility,
                     relative_humidity_2m, precipitation_probability, wind_speed_10m)
-                    VALUES (?,?,?,?,?,?,?,?,?)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     """, rows
     )
 
@@ -123,7 +126,7 @@ def insert_fc_data(cur, df, city_id, fetch_id):
     cur.executemany("""INSERT INTO daily_forecast 
                     (fetch_id, city_id, day_time, temperature_2m, visibility,
                     relative_humidity_2m, precipitation_probability, wind_speed_10m)
-                    VALUES (?,?,?,?,?,?,?,?)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     """, rows
     )
 
@@ -132,11 +135,12 @@ def insert_fc_data(cur, df, city_id, fetch_id):
 def main():
 
     try:
-        with sqlite3.connect("./data/weather.db") as conn:
-            schema = open("create_tables.sql", "r").read()
-            conn.executescript(schema)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                schema = open("create_tables.sql", "r").read()
+                conn.execute(schema)
 
-            print('Database tables created succesfully')
+                print('Database tables created succesfully')
 
     except Exception as e:
         print(f"Error creating database tables: {e}")
@@ -148,7 +152,7 @@ def main():
     cities = data['cities']
 
     try:
-        with sqlite3.connect("./data/weather.db", timeout=10) as con:
+        with get_connection() as con:
 
             for coord in cities:
 
@@ -174,7 +178,7 @@ def main():
             print('All data loaded succesfully')
 
     except Exception as e:
-        print(f"Error loading data to SQLite: {e}")
+        print(f"Error loading data to database: {e}")
         raise
 
 if __name__ == "__main__":

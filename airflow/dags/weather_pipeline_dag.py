@@ -6,7 +6,7 @@ import os
 
 
 default_args = {
-    "owner" : "airflow",
+    "owner" : "airflow", 
     "retries" : 1,
     "retry_delay" : timedelta(minutes=5)
 }
@@ -29,15 +29,20 @@ def weather_pipeline():
         image="weather-pipeline",
         command=["python", "fetch_weather_data.py"],
         docker_url="unix://var/run/docker.sock",
-        mounts=[
-            Mount(
-                source=os.environ["WEATHER_DATA_HOST_PATH"],
-                target='/app/data',        # Path inside the container
-                type='bind',
-            )
-        ],
+        # mounts=[
+        #     Mount(
+        #         source=os.environ["WEATHER_DATA_HOST_PATH"],
+        #         target='/app/data',        # Path inside the container
+        #         type='bind',
+        #     )
+        # ],
         environment={
-            "PIPELINE_RUN_ID": "{{ run_id }}"
+            "PIPELINE_RUN_ID": "{{ run_id }}",
+            "host": "{{ conn.my_weather_db.host }}",
+            "user": "{{ conn.my_weather_db.login }}",
+            "password": "{{ conn.my_weather_db.password }}",
+            "port": "{{ conn.my_weather_db.port }}",
+            "dbname": "{{ conn.my_weather_db.schema }}",
         },
         mount_tmp_dir=False,
         auto_remove="success",
@@ -48,13 +53,20 @@ def weather_pipeline():
         image="weather-pipeline",
         command=["python", "data_quality.py"],
         docker_url="unix://var/run/docker.sock",
-        mounts=[
-            Mount(
-                source=os.environ["WEATHER_DATA_HOST_PATH"],
-                target='/app/data',        # Path inside the container
-                type='bind',
-            )
-        ],
+        # mounts=[
+        #     Mount(
+        #         source=os.environ["WEATHER_DATA_HOST_PATH"],
+        #         target='/app/data',        # Path inside the container
+        #         type='bind',
+        #     )
+        # ],
+        environment={
+            "host": "{{ conn.my_weather_db.host }}",
+            "user": "{{ conn.my_weather_db.login }}",
+            "password": "{{ conn.my_weather_db.password }}",
+            "port": "{{ conn.my_weather_db.port }}",
+            "dbname": "{{ conn.my_weather_db.schema }}",
+        },
         mount_tmp_dir=False,
         auto_remove="success",
     )

@@ -1,8 +1,8 @@
 -- 1. Which cities will have the highest temperature tomorrow?
 select 
     c.city_name,
-    h.day_time, 
-    h.hour_time, 
+    -- h.day_time, 
+    -- h.hour_time, 
     max(h.temperature_2m) as max_temp 
 
 from hourly_forecast h
@@ -20,7 +20,7 @@ join (
 join cities c
     on h.city_id = c.city_id
 
-where day_time = date('now', '+1 days')
+where TO_DATE(day_time, 'YYYY-MM-DD') = CURRENT_DATE + INTERVAL '1 day'
 
 group by 
     c.city_name

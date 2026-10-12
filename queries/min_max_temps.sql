@@ -22,5 +22,4 @@ join (
 join cities c
     on h.city_id = c.city_id
 group by 
-    c.city_id,
-    h.day_time
+    c.city_name, h.day_time
