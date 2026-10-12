@@ -7,3 +7,5 @@ notebooks/
 airflow/
 .env
 .dockerignore
+.venv
+.git
